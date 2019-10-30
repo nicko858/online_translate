@@ -31,10 +31,10 @@
   Добавьте записи со следующими параметрами:  
   1) `Type`: *Plain Text*  
      `Name`: *Yandex*  
-     `Command Line` : `python3 <online_translate_path>/online_translate.py yandex %GDWORD%`
+     `Command Line` : `python3 <online_translate_path>/translator.py yandex %GDWORD%`
   2) `Type`: *Plain Text*  
      `Name`: *Google*  
-     `Command Line` : `python3 <online_translate_path>/online_translate.py google %GDWORD%`  
+     `Command Line` : `python3 <online_translate_path>/translator.py google %GDWORD%`  
 , где:
      - *python3* - путь к интерпритатору python, или к виртуальному окружению
      - *<online_translate_path>* - директория куда склонирован `online_translate`  
