@@ -30,34 +30,28 @@ def get_args():
 
 def translate_google(phrase):
     translator = Translator()
-    try:
-        translator_response, *_ = translator.translate(
-            phrase,
-            src='en',
-            dest='ru'
-            )
-        return translator_response.text
-    except (ConnectionError, HTTPError):
-        return
+    translator_response, *_ = translator.translate(
+        phrase,
+        src='en',
+        dest='ru'
+        )
+    return translator_response.text
 
 
 def translate_yandex(phrase):
     translate_key = getenv("YANDEX_API_KEY")
-    try:
-        params = {
-                  "key": translate_key,
-                  "text": phrase,
-                  "lang": "en-ru"
-                  }
-        response = requests.get(
-            "https://translate.yandex.net/api/v1.5/tr.json/translate",
-            params=params
-        )
-        response.raise_for_status()
-        content = dict(response.json())
-        return ''.join(content.get("text"))
-    except (ConnectionError, HTTPError):
-        return
+    params = {
+              "key": translate_key,
+              "text": phrase,
+              "lang": "en-ru"
+              }
+    response = requests.get(
+        "https://translate.yandex.net/api/v1.5/tr.json/translate",
+        params=params
+    )
+    response.raise_for_status()
+    content = dict(response.json())
+    return ''.join(content.get("text"))
 
 
 if __name__ == '__main__':
@@ -69,5 +63,8 @@ if __name__ == '__main__':
         'yandex': translate_yandex,
         'google': translate_google
     }
-    translate_service = translate_service_map[service]
-    print(translate_service(phrase))
+    try:
+        translate_service = translate_service_map[service]
+        print(translate_service(phrase))
+    except (ConnectionError, HTTPError):
+        pass
