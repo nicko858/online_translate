@@ -39,19 +39,27 @@ def translate_google(phrase):
 
 
 def translate_yandex(phrase):
-    translate_key = getenv("YANDEX_API_KEY")
+    translate_key = getenv("YANDEX_IAM_TOKEN")
+    folder_id = getenv("FOLDER_ID")
+    headers = {"Authorization": "Bearer {}".format(translate_key)}
     params = {
-              "key": translate_key,
-              "text": phrase,
-              "lang": "en-ru"
+              "texts": phrase,
+              "sourceLanguageCode": "en",
+              "targetLanguageCode": "ru",
+              "folder_id": folder_id
               }
-    response = requests.get(
-        "https://translate.yandex.net/api/v1.5/tr.json/translate",
-        params=params
-    )
-    response.raise_for_status()
-    content = dict(response.json())
-    return ''.join(content.get("text"))
+    try:
+        response = requests.post(
+            "https://translate.api.cloud.yandex.net/translate/v2/translate",
+            params=params,
+            headers=headers
+        )
+        response.raise_for_status()
+        translations = response.json()["translations"]
+    except (ConnectionError, HTTPError):
+        return
+    for translation in translations:
+        return translation["text"].replace("+", " ")
 
 
 if __name__ == '__main__':

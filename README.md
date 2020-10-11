@@ -19,9 +19,15 @@
   ```
 
 - Создайте файл `.env` в директории программы
-- Получите [`api-key`](https://translate.yandex.ru/developers/keys) для `yandex translate`  
+- Создайте аккаунт в [yandex cloud](https://cloud.yandex.ru/docs/translate/)
+- Получите [IAM-токен](https://cloud.yandex.ru/docs/iam/operations/iam-token/create), необходимый для аутентификации `yandex translate`  
+- Получите [идентификатор](https://cloud.yandex.ru/docs/resource-manager/operations/folder/get-id) любого каталога, на который у вашего аккаунта есть роль `editor` или выше  
 - Создайте следующую запись в `.env`- файле:  
-  `YANDEX_API_KEY=<ваш API-ключ>`
+
+  ```bash
+  YANDEX_IAM_TOKEN=<ваш API-ключ>
+  FOLDER_ID=<ваш folder_id>
+  ```
 
 ## Настройка Goldendict
 
