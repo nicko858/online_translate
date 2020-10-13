@@ -3,8 +3,18 @@ import requests
 from requests import HTTPError
 from requests import ConnectionError
 from dotenv import load_dotenv
+import dotenv
 from os import getenv
+import os
 from googletrans import Translator
+import json
+import time
+import jwt
+from jwt.contrib.algorithms.pycrypto import RSAAlgorithm
+
+
+class IamTokenExpired(Exception):
+    """Class for handle yandex cloud token expiration."""
 
 
 def get_args():
@@ -30,34 +40,86 @@ def get_args():
 
 def translate_google(phrase):
     translator = Translator()
-    translator_response, *_ = translator.translate(
-        phrase,
-        src='en',
-        dest='ru'
+    try:
+        translator_response, *_ = translator.translate(
+            phrase,
+            src='en',
+            dest='ru'
+            )
+        return translator_response.text
+    except (ConnectionError, HTTPError):
+        return
+
+
+def get_yandex_iam_token(jwt_token):
+    headers = {"Content-Type": "application/json"}
+    params = {"jwt": jwt_token}
+    try:
+        response = requests.post(
+                "https://iam.api.cloud.yandex.net/iam/v1/tokens",
+                params=params,
+                headers=headers
+            )
+    except (ConnectionError, HTTPError):
+        return
+    return response.json()["iamToken"]
+
+
+def generate_yandex_jwt_token():
+    with open("key.json", 'r') as json_file:
+        data = json.load(json_file)
+        service_account_id = data["service_account_id"]
+        key_id = data["id"]
+        private_key = data["private_key"]
+    
+    now = int(time.time())
+    payload = {
+            'aud': 'https://iam.api.cloud.yandex.net/iam/v1/tokens',
+            'iss': service_account_id,
+            'iat': now,
+            'exp': now + 360}
+    encoded_token = jwt.encode(
+        payload,
+        private_key,
+        algorithm='PS256',
+        headers={'kid': key_id})
+    return encoded_token
+
+
+def update_iam_token(iam_token):
+    dotenv_file = dotenv.find_dotenv()
+    dotenv.load_dotenv(dotenv_file)
+    os.environ["YANDEX_IAM_TOKEN"] = iam_token
+    dotenv.set_key(
+        dotenv_file,
+        "YANDEX_IAM_TOKEN",
+        os.environ["YANDEX_IAM_TOKEN"]
         )
-    return translator_response.text
 
 
 def translate_yandex(phrase):
-    translate_key = getenv("YANDEX_IAM_TOKEN")
-    folder_id = getenv("FOLDER_ID")
-    headers = {"Authorization": "Bearer {}".format(translate_key)}
-    params = {
-              "texts": phrase,
-              "sourceLanguageCode": "en",
-              "targetLanguageCode": "ru",
-              "folder_id": folder_id
-              }
     try:
+        translate_key = getenv("YANDEX_IAM_TOKEN")
+        folder_id = getenv("FOLDER_ID")
+        headers = {"Authorization": "Bearer {}".format(translate_key)}
+        params = {
+                  "texts": phrase,
+                  "sourceLanguageCode": "en",
+                  "targetLanguageCode": "ru",
+                  "folder_id": folder_id
+                  }
         response = requests.post(
             "https://translate.api.cloud.yandex.net/translate/v2/translate",
             params=params,
             headers=headers
-        )
+            )
         response.raise_for_status()
         translations = response.json()["translations"]
     except (ConnectionError, HTTPError):
-        return
+        if response.json()["code"] == 16:
+            raise IamTokenExpired()
+        else:
+            return
     for translation in translations:
         return translation["text"].replace("+", " ")
 
@@ -73,6 +135,9 @@ if __name__ == '__main__':
     }
     try:
         translate_service = translate_service_map[service]
-        print(translate_service(phrase))
-    except (ConnectionError, HTTPError):
-        pass
+    except IamTokenExpired:
+        jwt_token = generate_yandex_jwt_token()
+        iam_token = get_yandex_iam_token(jwt_token)
+        update_iam_token(iam_token)
+        translate_service = translate_service_map[service]
+    print(translate_service(phrase))

@@ -5,7 +5,10 @@
 Этот скрипт можно использовать как расширение для [Goldendict](http://goldendict.org/), позволяющее выполнять машинный онлайн-перевод от различных сервисов. В данный момент, скрипт умеет работать с сервисами: [translate.yandex](https://translate.yandex.ru/), [translate.google](https://translate.google.com/).  
 Также, его можно использовать как консольный онлайн-переводчик.
 
-## Установка
+## Установка и предварительная настройка
+
+Для `google translate` дополнительно настраивать ничего не потребуется. Весь необходимый функционал реализован в библиотеке `googletrans`.  
+Для `yandex translate` следуйте  [инструкции](###YandexTranslate).
 
 - [Goldendict](http://goldendict.org/) должен быть установлен в системе.  
 - Python3 должен быть установлен в системе.
@@ -18,9 +21,14 @@
   pip install -r requirements.txt
   ```
 
+### YandexTranslate
+
 - Создайте файл `.env` в директории программы
 - Создайте аккаунт в [yandex cloud](https://cloud.yandex.ru/docs/translate/)
-- Получите [IAM-токен](https://cloud.yandex.ru/docs/iam/operations/iam-token/create), необходимый для аутентификации `yandex translate`  
+- Создайте сервисный аккаунт с помошью [данной инструкции](https://cloud.yandex.ru/docs/iam/operations/sa/create)
+- Создайте авторизованный ключ для сервисного аккаунта с помошью [данной инструкции](https://cloud.yandex.ru/docs/iam/operations/authorized-key/create). В результате, вы должны получить файл `key.json`.
+- Скопируйте созданный `key.json` в директорию проекта
+- Получите [IAM-токен](https://cloud.yandex.ru/docs/iam/operations/iam-token/create)*, необходимый для аутентификации `yandex translate`  
 - Получите [идентификатор](https://cloud.yandex.ru/docs/resource-manager/operations/folder/get-id) любого каталога, на который у вашего аккаунта есть роль `editor` или выше  
 - Создайте следующую запись в `.env`- файле:  
 
@@ -28,6 +36,9 @@
   YANDEX_IAM_TOKEN=<ваш API-ключ>
   FOLDER_ID=<ваш folder_id>
   ```
+
+*Срок действия IAM-токена - 12 часов. Если `yandex translate api` вернет ответ с кодом `16`, будет сгенерирован новый IAM-токен и обновится переменная `YANDEX_IAM_TOKEN` в `.env`- файле.  
+Данный функционал реализован с помощью `JWT`. См. [инструкцию](https://cloud.yandex.ru/docs/iam/operations/iam-token/create-for-sa#jwt-create)
 
 ## Настройка Goldendict
 
