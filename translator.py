@@ -36,15 +36,18 @@ def get_args():
 
 def translate_google(phrase):
     translator = Translator()
-    try:
-        translator_response, *_ = translator.translate(
-            phrase,
-            src='en',
-            dest='ru'
-            )
-        return translator_response.text
-    except (ConnectionError, HTTPError):
-        return
+    while True:
+        try:
+            translator_response, *_ = translator.translate(
+                phrase,
+                src='en',
+                dest='ru'
+                )
+            return translator_response.text
+        except AttributeError:
+            translator = Translator()
+        except (ConnectionError, HTTPError):
+            return
 
 
 def get_yandex_iam_token(jwt_token):
