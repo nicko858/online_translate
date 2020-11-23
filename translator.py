@@ -65,23 +65,27 @@ def get_yandex_iam_token(jwt_token):
 
 
 def generate_yandex_jwt_token():
-    with open("key.json", 'r') as json_file:
-        data = json.load(json_file)
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    key_file = os.path.join(script_dir, "key.json")
+    with open(key_file, 'r') as file_handler:
+        data = json.load(file_handler)
         service_account_id = data["service_account_id"]
         key_id = data["id"]
         private_key = data["private_key"]
     
     now = int(time.time())
     payload = {
-            'aud': 'https://iam.api.cloud.yandex.net/iam/v1/tokens',
-            'iss': service_account_id,
-            'iat': now,
-            'exp': now + 360}
+        'aud': 'https://iam.api.cloud.yandex.net/iam/v1/tokens',
+        'iss': service_account_id,
+        'iat': now,
+        'exp': now + 360,
+        }
     encoded_token = jwt.encode(
         payload,
         private_key,
         algorithm='PS256',
-        headers={'kid': key_id})
+        headers={'kid': key_id},
+        )
     return encoded_token
 
 
